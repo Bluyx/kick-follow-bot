@@ -1,7 +1,6 @@
-import tls_client, random, sys, console, concurrent.futures, bs4, time, threading
+import tls_client, random, sys, console, concurrent.futures, bs4, threading
 from tls_client import exceptions as tls_exceptions
 from kasada import kasada, salamoonder
-
 
 channel = input("Follow Channel: ")
 tokens = input("Tokens file: ")
@@ -29,7 +28,7 @@ def follow(channel, token, retry=True):
     pjs = "https://kick.com" + bs4.BeautifulSoup(client.get("https://kick.com").text, "html.parser").find_all("script", {"src": lambda s: s and s.endswith("p.js")})[0]["src"]
     if debug == "y":
         with lock:
-            console.info(f"Solving Kasada...")
+            console.info("Solving Kasada...")
     solveKasada = salamoonder(pjs, salamoonderKey)
     # solveKasada = kasada(pjs, f"/api/v2/channels/{channel}/follow")
     headers = {
@@ -57,25 +56,30 @@ def follow(channel, token, retry=True):
         if req.status_code == 422:
             with lock:
                 console.error(f"Already followed {channel} | {token}")
+        elif req.status_code == 403:
+            if retry:
+                return follow(channel, token, False)
         elif req.status_code != 200:
             with lock:
-                console.error(f"Failed to follow {channel} with token {token} | {req.status_code}")
-                if retry:
-                    return follow(channel, token, False)
+                console.error(f"Failed to follow {channel} with token {token} | {req.status_code}, retrying...")
+            if retry:
+                return follow(channel, token, False)
         else:
             with lock:
                 console.success(f"Followed {channel}")
     except tls_exceptions.TLSClientExeption as err:
         if retry:
-            console.error("Dead proxy, retrying...")
+            with lock:
+                console.error("Dead proxy, retrying...")
             return follow(channel, token, False)
         sys.exit(console.error("Probably dead proxy" + str(err)))
 
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=threads) as executor:
-    futures = [executor.submit(follow, channel, token.strip().split("|")[-1]) for token in tokens]
+    futures = [executor.submit(follow, channel, token.strip().split(":")[-1]) for token in tokens]
     for future in concurrent.futures.as_completed(futures):
         try:
             result = future.result()
         except Exception as err:
             print(str(err))
+console.success("Done")
