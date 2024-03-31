@@ -9,6 +9,7 @@
 ## Requirements
 - <a href="https://salamoonder.com/">Salamoonder api key (Kasada Solver)</a>
 - proxies
+- <a href="https://github.com/Bluyx/Kick.com-account-generator" target="_blank">Accounts</a>
 
 ## Installation
 ```bash
