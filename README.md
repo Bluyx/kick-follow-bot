@@ -1,5 +1,5 @@
 # Kick.com Follow Bot
-⭐️
+
 ## Features
 - Fully based on Requests
 - Threads support
